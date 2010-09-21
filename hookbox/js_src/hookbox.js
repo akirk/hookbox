@@ -61,12 +61,7 @@ var Subscription = Class(function(supr) {
 					}
 				}
 				
-				for (var i = 0, user; user = this.presence[i]; ++i) {
-					if (user == args.user) {
-						this.presence.splice(i, 1);
-						break;
-					}
-				}
+				delete this.presence[args.user];
 				this.onUnsubscribe(args);
 				break;
 			case 'SUBSCRIBE':
@@ -76,7 +71,7 @@ var Subscription = Class(function(supr) {
 						this.history.shift(); 
 					}
 				}
-				this.presence.push(args.user);
+				this.presence[args.user] = args.userdata;
 				this.onSubscribe(args);
 				break;
 			case 'STATE_UPDATE':

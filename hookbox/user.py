@@ -10,16 +10,20 @@ def get_now():
   return datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
 class User(object):
-    def __init__(self, server, name):
+    def __init__(self, server, name, data=None):
         self.server = server
         self.name = name
         self.connections = []
         self.channels = []
+        self.data = {}
+        if isinstance(data, dict):
+            self.data = data
         self._temp_cookie = ""
     def serialize(self):
         return {
             'channels': [ chan.name for chan in self.channels ],
             'connections': [ conn.id for conn in self.connections ],
+            'data': dict([ (key, self.data[key]) for key in self.data]),
             'name': self.name
         }
         
@@ -56,6 +60,9 @@ class User(object):
         
     def get_name(self):
         return self.name
+        
+    def get_data(self):
+        return self.data
     
     def send_frame(self, name, args={}, omit=None):
         for conn in self.connections:

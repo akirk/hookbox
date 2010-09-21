@@ -14,14 +14,14 @@ def get_now():
 
 class Channel(object):
     _options = {
-        'reflective': True,
+        'reflective': False,
         'history': [],
         'history_size': 0,
         'moderated': True,
-        'moderated_publish': False,
-        'moderated_subscribe': False,
-        'moderated_unsubscribe': False,
-        'presenceful': False,
+        'moderated_publish': True,
+        'moderated_subscribe': True,
+        'moderated_unsubscribe': True,
+        'presenceful': True,
         'anonymous': False,
         'polling': {
             'mode': "",
@@ -165,7 +165,7 @@ class Channel(object):
             raise ExpectedException("Invalid json for payload")
         payload = encoded_payload
         if needs_auth and (self.moderated or self.moderated_publish):
-            form = { 'channel_name': self.name, 'payload': payload }
+            form = { 'channel_name': self.name, 'payload': json.dumps(payload) }
             success, options = self.server.http_request('publish', user.get_cookie(conn), form, conn=conn)
             self.server.maybe_auto_subscribe(user, options, conn=conn)
             if not success:
@@ -216,7 +216,7 @@ class Channel(object):
         self.subscribers.append(user)
         user.channel_subscribed(self)
         _now = get_now()
-        frame = {"channel_name": self.name, "user": user.get_name(), "datetime": _now}
+        frame = {"channel_name": self.name, "user": user.get_name(), "userdata": user.get_data(), "datetime": _now}
         self.server.admin.channel_event('subscribe', self.name, frame)
         if self.presenceful:
             for subscriber in self.subscribers:
@@ -228,7 +228,7 @@ class Channel(object):
         user.send_frame('SUBSCRIBE', frame)
             
         if self.history_size:
-            self.history.append(('SUBSCRIBE', {"user": user.get_name(), "datetime": _now }))
+            self.history.append(('SUBSCRIBE', {"user": user.get_name(), "userdata": user.get_data(), "datetime": _now }))
             self.prune_history()
 
     def state_del(self, key):
@@ -291,7 +291,7 @@ class Channel(object):
         frame["history_size"] = self.history_size
         frame["state"] = self.state
         if self.presenceful:
-            frame['presence'] = [ subscriber.get_name() for subscriber in self.subscribers ]
+            frame['presence'] = dict([ (subscriber.get_name(), subscriber.get_data()) for subscriber in self.subscribers ])
         else:
             frame['presence'] = [];
         return frame

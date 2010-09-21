@@ -230,8 +230,10 @@ class HookboxServer(object):
             raise ExpectedException(options.get('error', 'Unauthorized'))
         if 'name' not in options:
             raise ExpectedException('Unauthorized (missing name parameter in server response)')
+        if 'data' not in options:
+            options['data'] = {}
         self.conns[conn.id] = conn
-        user = self.get_user(options['name'])
+        user = self.get_user(options['name'], options['data'])
         user.add_connection(conn)
         self.admin.user_event('connect', user.get_name(), conn.serialize())
         self.admin.connection_event('connect', conn.id, conn.serialize())
@@ -248,9 +250,9 @@ class HookboxServer(object):
         
     def exists_user(self, name):
         return name in self.users
-    def get_user(self, name):
+    def get_user(self, name, data):
         if name not in self.users:
-            self.users[name] = User(self, name)
+            self.users[name] = User(self, name, data)
             self.admin.user_event('create', name, self.users[name].serialize())
         return self.users[name]
 
